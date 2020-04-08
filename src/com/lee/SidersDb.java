@@ -1,7 +1,9 @@
 package com.lee;
 
+import com.mchange.v2.c3p0.C3P0ProxyStatement;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
+import java.sql.Connection;
 import java.sql.Statement;
 
 public class SidersDb {
@@ -34,7 +36,25 @@ public class SidersDb {
     }
 
     public Statement getStatement(){
+        Connection connection = null;
+        Statement statement;
+        try {
+            connection = dataSource.getConnection();
+            statement = connection.createStatement();
+            ((C3P0ProxyStatement)statement).rawStatementOperation(com.mysql.jdbc.Statement.class.getMethod("enableStreamingResults"), C3P0ProxyStatement.RAW_STATEMENT, new Object[0]);
+        }catch (Exception e){
+            if (connection != null) {
+                try {
+                    connection.close();
+                }
+                catch (Exception e2){
+                    throw new RuntimeException(e2);
+                }
+            }
+            throw new RuntimeException(e);
+        }
 
+        return statement;
     }
 
 
