@@ -30,9 +30,6 @@ public class SidersDb {
         } catch (Exception e){
             throw new RuntimeException(e);
         }
-        finally {
-            dataSource = null;
-        }
     }
 
     public Statement getStatement(){
@@ -55,6 +52,24 @@ public class SidersDb {
         }
 
         return statement;
+    }
+
+    public void executeSql(String strSql){
+        Statement statement = getStatement();
+        try {
+            statement.execute(strSql);
+        }catch (Exception e){
+            throw new RuntimeException(e);
+        }
+        finally {
+            try{
+                Connection connection = statement.getConnection();
+                connection.close();
+                statement.close();
+            }catch (Exception e){
+
+            }
+        }
     }
 
 
