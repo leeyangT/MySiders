@@ -3,8 +3,9 @@ package com.lee;
 import com.mchange.v2.c3p0.C3P0ProxyStatement;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
-import java.sql.Connection;
-import java.sql.Statement;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SidersDb {
     private ComboPooledDataSource dataSource;
@@ -32,7 +33,7 @@ public class SidersDb {
         }
     }
 
-    public Statement getStatement(){
+    private Statement getStatement(){
         Connection connection = null;
         Statement statement;
         try {
@@ -66,6 +67,19 @@ public class SidersDb {
                 Connection connection = statement.getConnection();
                 connection.close();
                 statement.close();
+            }catch (Exception e){
+
+            }
+        }
+    }
+
+    public <T extends Table>List<T> getRowsClass(Class<T> cls, String strSql){
+        Statement statement = getStatement();
+        List<T> lstRet = new ArrayList<T>();
+        if (statement != null) {
+            try {
+                ResultSet resultSet = statement.executeQuery(strSql);
+
             }catch (Exception e){
 
             }
