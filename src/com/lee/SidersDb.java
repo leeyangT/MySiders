@@ -3,6 +3,7 @@ package com.lee;
 import com.mchange.v2.c3p0.C3P0ProxyStatement;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 
+import java.lang.reflect.Field;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,17 +75,46 @@ public class SidersDb {
     }
 
     public <T extends Table>List<T> getRowsClass(Class<T> cls, String strSql){
-        Statement statement = getStatement();
+        Statement stmt = getStatement();
         List<T> lstRet = new ArrayList<T>();
-        if (statement != null) {
+        if (stmt  != null) {
             try {
-                ResultSet resultSet = statement.executeQuery(strSql);
-
+                ResultSet resultSet = stmt .executeQuery(strSql);
+                ResultSetMetaData rsmd = resultSet.getMetaData();
+                int iColumnCount = rsmd.getColumnCount();
+                Field []fields = new Field[iColumnCount];
+                for (int i = 1; i <= iColumnCount; i++) {
+                    fields[i-1] = cls.getField(rsmd.getColumnName(i));
+                }
+                while (resultSet.next()) {
+                    T table = cls.newInstance();
+                    for (int i=1; i < iColumnCount; i++) {
+                        fields[i-1].set(table, getResultSetAtom(rsmd, resultSet, i));
+                    }
+                }
             }catch (Exception e){
-
+                throw new RuntimeException(e);
             }
         }
+        return lstRet;
     }
 
+    private static Object getResultSetAtom(ResultSetMetaData rsmd, ResultSet rs, int i) throws Exception {
+        int iColumnType = rsmd.getColumnType(i);
+        switch (iColumnType) {
+            case Types.TINYINT:
+                return rs.getByte(i);
+            case Types.INTEGER:
+                return rs.getInt(i);
+            case Types.BIGINT:
+                return rs.getLong(i);
+            case Types.VARBINARY:
+            case Types.LONGVARBINARY:
+                byte[] arrTmp = rs.getBytes(i);
+                //return new String(arrTmp, BaseUtil.s_CharsetUtf8);
+            default:
+                return rs.getString(i);
+        }
+    }
 
 }
